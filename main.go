@@ -16,14 +16,11 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/golangast/genserver/assets"
 	"github.com/golangast/genserver/src/funcmaps"
 	"github.com/golangast/genserver/src/handler/get/profile"
 	"github.com/golangast/genserver/src/routes"
-
-	// "github.com/golangast/goservershell/assets"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/golangast/genserver/internal/dbsql/createtable"
@@ -216,14 +213,6 @@ func main() {
 
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(30)))
 
-	e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
-	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
-	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
-		HTML5:      true,
-		Root:       "assets/optimized/",
-		Filesystem: http.FS(AssetsOptimize),
-	}))
 	//#tls
 
 	e.Logger.Fatal(e.Start(":5002"))
