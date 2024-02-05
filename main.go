@@ -37,6 +37,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/spf13/viper"
+	//#importtls
 )
 
 //go:embed all:assets/optimized
@@ -223,37 +224,9 @@ func main() {
 		Root:       "assets/optimized/",
 		Filesystem: http.FS(AssetsOptimize),
 	}))
-	// autoTLSManager := autocert.Manager{
-	// 	Prompt: autocert.AcceptTOS,
-	// 	// Cache certificates to avoid issues with rate limits (https://letsencrypt.org/docs/rate-limits)
-	// 	Cache:      autocert.DirCache("/var/www/.cache"),
-	// 	HostPolicy: autocert.HostWhitelist("genserver.com"),
-	// }
-
-	// s := http.Server{
-	// 	Addr:    ":443",
-	// 	Handler: e, // set Echo as handler
-	// 	TLSConfig: &tls.Config{
-	// 		Certificates:   nil, // <-- s.ListenAndServeTLS will populate this field
-	// 		GetCertificate: autoTLSManager.GetCertificate,
-	// 		NextProtos:     []string{acme.ALPNProto},
-	// 	},
-	// 	ReadTimeout: 30 * time.Second, // use custom timeouts
-	// }
-	// keyspem, err := assets.Keypem.ReadFile("certs/key.pem")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// certspem, err := assets.Certpem.ReadFile("certs/cert.pem")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// if err := s.ListenAndServeTLS(string(certspem), string(keyspem)); err != http.ErrServerClosed {
-	// 	e.Logger.Fatal(err)
-	// }
+	//#tls
 
 	e.Logger.Fatal(e.Start(":5002"))
-	// for new cert go here https://stackoverflow.com/questions/45508442/golang-https-with-ecdsa-certificate-from-openssl
 
 }
 
