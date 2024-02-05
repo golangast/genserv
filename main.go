@@ -212,7 +212,7 @@ func main() {
 	}))
 
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(30)))
-
+	e.Static("/", "assets/optimized")
 	//#tls
 
 	e.Logger.Fatal(e.Start(":5002"))
