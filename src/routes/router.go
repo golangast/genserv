@@ -8,7 +8,7 @@ import (
 	"github.com/golangast/genserv/src/handler/post/userinput"
 	"github.com/golangast/genserv/src/handler/restful/post"
 	"github.com/labstack/echo/v4"
-	//importroute
+	// importroute
 )
 
 func Routes(e *echo.Echo) {
