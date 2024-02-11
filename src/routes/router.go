@@ -8,6 +8,7 @@ import (
 	"github.com/golangast/genserv/src/handler/post/userinput"
 	"github.com/golangast/genserv/src/handler/restful/post"
 	"github.com/labstack/echo/v4"
+	//importroute
 )
 
 func Routes(e *echo.Echo) {
@@ -15,10 +16,10 @@ func Routes(e *echo.Echo) {
 	e.GET("/", home.Home)
 	e.GET("/usercreate", profile.Profile)
 	e.GET("/loginemail/:email/:sitetoken", loginemail.LoginEmail)
-
+	//getroute
 	//post
 	e.POST("/usercreate", createuser.Createuser)
 	e.POST("/userinput", userinput.UserInput)
 	e.POST("/p", post.Posts)
-
+	//postroute
 }
