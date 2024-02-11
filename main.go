@@ -17,17 +17,17 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/golangast/genserver/assets"
-	"github.com/golangast/genserver/src/funcmaps"
-	"github.com/golangast/genserver/src/handler/get/profile"
-	"github.com/golangast/genserver/src/routes"
+	"github.com/golangast/genserv/assets"
+	"github.com/golangast/genserv/src/funcmaps"
+	"github.com/golangast/genserv/src/handler/get/profile"
+	"github.com/golangast/genserv/src/routes"
 
 	"github.com/Masterminds/sprig/v3"
-	"github.com/golangast/genserver/internal/dbsql/createtable"
-	"github.com/golangast/genserver/internal/dbsql/user"
-	"github.com/golangast/genserver/internal/rand"
+	"github.com/golangast/genserv/internal/dbsql/createtable"
+	"github.com/golangast/genserv/internal/dbsql/user"
+	"github.com/golangast/genserv/internal/rand"
 
-	"github.com/golangast/genserver/internal/security/tokens"
+	"github.com/golangast/genserv/internal/security/tokens"
 	"github.com/golangast/gentil/utility/ff"
 	"github.com/golangast/gentil/utility/temp"
 	"github.com/labstack/echo/v4"

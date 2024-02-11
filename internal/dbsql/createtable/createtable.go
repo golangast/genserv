@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/golangast/genserver/internal/dbsql/dbconn"
+	"github.com/golangast/genserv/internal/dbsql/dbconn"
 )
 
 func CreateTable() error {

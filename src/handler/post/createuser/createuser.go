@@ -3,10 +3,10 @@ package createuser
 import (
 	"net/http"
 
-	"github.com/golangast/genserver/internal/dbsql/user"
-	"github.com/golangast/genserver/internal/security/cookies"
-	"github.com/golangast/genserver/internal/security/jwt"
-	"github.com/golangast/genserver/internal/security/tokens"
+	"github.com/golangast/genserv/internal/dbsql/user"
+	"github.com/golangast/genserv/internal/security/cookies"
+	"github.com/golangast/genserv/internal/security/jwt"
+	"github.com/golangast/genserv/internal/security/tokens"
 	"github.com/labstack/echo/v4"
 )
 

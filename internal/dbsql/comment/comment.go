@@ -6,8 +6,8 @@ import (
 	"log/slog"
 
 	"github.com/go-playground/validator"
-	"github.com/golangast/genserver/internal/dbsql/dbconn"
-	"github.com/golangast/genserver/internal/loggers"
+	"github.com/golangast/genserv/internal/dbsql/dbconn"
+	"github.com/golangast/genserv/internal/loggers"
 )
 
 func (u *Comment) Create() error {

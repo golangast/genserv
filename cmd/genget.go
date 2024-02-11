@@ -13,7 +13,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
-	"github.com/golangast/genserver/internal/loggers"
+	"github.com/golangast/genserv/internal/loggers"
 	gentil "github.com/golangast/gentil/utility/ff"
 	term "github.com/golangast/gentil/utility/term"
 	text "github.com/golangast/gentil/utility/text"

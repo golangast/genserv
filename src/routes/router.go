@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"github.com/golangast/genserver/src/handler/get/home"
-	"github.com/golangast/genserver/src/handler/get/loginemail"
-	"github.com/golangast/genserver/src/handler/get/profile"
-	"github.com/golangast/genserver/src/handler/post/createuser"
-	"github.com/golangast/genserver/src/handler/post/userinput"
-	"github.com/golangast/genserver/src/handler/restful/post"
+	"github.com/golangast/genserv/src/handler/get/home"
+	"github.com/golangast/genserv/src/handler/get/loginemail"
+	"github.com/golangast/genserv/src/handler/get/profile"
+	"github.com/golangast/genserv/src/handler/post/createuser"
+	"github.com/golangast/genserv/src/handler/post/userinput"
+	"github.com/golangast/genserv/src/handler/restful/post"
 	"github.com/labstack/echo/v4"
 )
 

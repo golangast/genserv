@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/golangast/genserver/internal/dbsql/user"
+	"github.com/golangast/genserv/internal/dbsql/user"
 	"github.com/labstack/echo/v4"
 )
 

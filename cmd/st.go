@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/golangast/genserver/internal/dbsql/dbconn"
+	"github.com/golangast/genserv/internal/dbsql/dbconn"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +25,7 @@ var stCmd = &cobra.Command{
 		dbconn.ErrorCheck(err)
 		fmt.Println("db connected")
 
-		err, out, errout := Startprograms(`go build && ./genserver`)
+		err, out, errout := Startprograms(`go build && ./genserv`)
 		if err != nil {
 			log.Printf("error: %v\n", err)
 		}

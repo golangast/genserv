@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/golangast/genserver/internal/loggers"
+	"github.com/golangast/genserv/internal/loggers"
 	"github.com/spf13/cobra"
 )
 

@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/go-playground/validator"
-	"github.com/golangast/genserver/internal/dbsql/dbconn"
-	"github.com/golangast/genserver/internal/security/cookies"
-	"github.com/golangast/genserver/internal/security/crypt"
-	"github.com/golangast/genserver/internal/security/jwt"
+	"github.com/golangast/genserv/internal/dbsql/dbconn"
+	"github.com/golangast/genserv/internal/security/cookies"
+	"github.com/golangast/genserv/internal/security/crypt"
+	"github.com/golangast/genserv/internal/security/jwt"
 	"github.com/labstack/echo/v4"
 )
 
