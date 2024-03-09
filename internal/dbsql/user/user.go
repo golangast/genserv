@@ -1,179 +1,243 @@
 package user
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/go-playground/validator"
-	"github.com/golangast/genserv/internal/dbsql/dbconn"
 	"github.com/golangast/genserv/internal/security/cookies"
 	"github.com/golangast/genserv/internal/security/crypt"
 	"github.com/golangast/genserv/internal/security/jwt"
 	"github.com/labstack/echo/v4"
+	"github.com/rqlite/gorqlite"
 )
 
-func (u *Users) Exists() error {
-	var exists bool
-	db, err := dbconn.DbConnection()
+func (u *Users) Exists() (error, bool) {
+	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
 	if err != nil {
-		return err
+		return err, false
 	}
-	stmts := db.QueryRowContext(context.Background(), "SELECT EXISTS(SELECT 1 FROM users WHERE email=?)", u.Email)
-	err = stmts.Scan(&exists)
+	qr, err := conn.QueryOneParameterized(
+		gorqlite.ParameterizedStatement{
+			Query:     "SELECT 1 from users where email = ?",
+			Arguments: []interface{}{u.Email},
+		},
+	)
 	if err != nil {
-		return err
+		return err, false
 	}
-	db.Close()
+	var exist bool
 
-	return nil
+	for qr.Next() {
+		err := qr.Scan(&exist)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	switch qr.Err {
+	case sql.ErrNoRows:
+		fmt.Println("No rows were returned!")
+	case nil:
+		fmt.Println("nil!!!!!!!!!!!!")
+	default:
+		fmt.Println("default!!!!!!!!!!!!")
+	}
+
+	conn.Close()
+
+	return nil, exist
 
 }
 func Exists(email, password, sitetoken string) (bool, error) {
-	var passwordhash string
-	db, err := dbconn.DbConnection()
+	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
 	if err != nil {
 		return false, err
 	}
 
-	stmts := db.QueryRowContext(context.Background(), "SELECT EXISTS(SELECT 1 FROM users WHERE email=? AND sitetoken=?)", email, sitetoken)
-	err = stmts.Scan(&passwordhash)
+	qr, err := conn.QueryOneParameterized(
+		gorqlite.ParameterizedStatement{
+			Query:     "SELECT PasswordHash from users where email = ? AND sitetoken=?",
+			Arguments: []interface{}{email, sitetoken},
+		},
+	)
 	if err != nil {
 		return false, err
 	}
+	defer conn.Close()
 
-	err = crypt.CheckPassword([]byte(passwordhash), []byte(password))
-	if err != nil {
-		return false, err
+	var PasswordHash string
+
+	for qr.Next() {
+		err := qr.Scan(&PasswordHash)
+		if err != nil {
+			return false, err
+		}
 	}
-
-	db.Close()
-
-	return true, nil
+	switch qr.Err {
+	case sql.ErrNoRows:
+		return false, err
+	case nil:
+		return false, nil
+	default:
+		err = crypt.CheckPassword([]byte(PasswordHash), []byte(password))
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
 
 }
 func (u *Users) CheckLogin(c echo.Context, email, sitetokens, passwordraw string) (error, string) {
-	db, err := dbconn.DbConnection()
+
+	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
 	if err != nil {
-		return err, "wrong input"
+		return err, ""
 	}
-	var exists string
-	ctx, cancel := context.WithTimeout(context.Background(), 56666*time.Millisecond)
-	defer cancel()
-	stmts := db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM users WHERE email=? AND sitetoken=? AND passwordraw=?)", email, sitetokens, passwordraw)
-	err = stmts.Scan(&exists)
+	qr, err := conn.QueryOneParameterized(
+		gorqlite.ParameterizedStatement{
+			Query:     "SELECT 1 from users where email = ? AND sitetoken=? AND passwordraw=?",
+			Arguments: []interface{}{email, sitetokens, passwordraw},
+		},
+	)
 	if err != nil {
-		return err, "wrong input"
+		return err, ""
 	}
 
-	if exists == "0" {
-		return err, "wrong input"
-	} else {
-		u, err := u.GetUserByEmail(email, sitetokens)
+	var exist bool
+
+	for qr.Next() {
+		err := qr.Scan(&exist)
 		if err != nil {
+			return err, ""
+
+		}
+	}
+	defer conn.Close()
+
+	switch qr.Err {
+	case sql.ErrNoRows:
+		return err, ""
+
+	case nil:
+		return err, ""
+
+	default:
+
+		if exist == false {
 			return err, "wrong input"
+		} else {
+			u, err := u.GetUserByEmail(email, sitetokens)
+			if err != nil {
+				return err, "wrong input"
+			}
+
+			err = crypt.CheckPassword([]byte(u.PasswordHash), []byte(u.PasswordRaw))
+			if err != nil {
+				return err, "wrong input"
+			}
+
+			err = cookies.WriteCookie(c, u.SessionName, u.SessionKey)
+			if err != nil {
+				return err, "cookie didnt write"
+			}
+
+			//header
+			hkey := c.Response().Header().Get("headerkey")
+
+			crypt.CheckPassword([]byte(hkey), []byte("goservershell"))
+
+			return nil, ""
 		}
-
-		err = crypt.CheckPassword([]byte(u.PasswordHash), []byte(u.PasswordRaw))
-		if err != nil {
-			return err, "wrong input"
-		}
-
-		// cookie, err := cookies.ReadCookie(c, u.SessionName)
-		// if err != nil {
-		// 	return err, "wrong input"
-		// }
-
-		err = cookies.WriteCookie(c, u.SessionName, u.SessionKey)
-		if err != nil {
-			return err, "cookie didnt write"
-		}
-
-		fmt.Println(u)
-		// if cookie.Name != u.SessionName && cookie.Value != u.SessionKey {
-		// 	return err, "wrong input"
-		// }
-
-		//header
-		hkey := c.Response().Header().Get("headerkey")
-
-		crypt.CheckPassword([]byte(hkey), []byte("goservershell"))
-
-		db.Close()
-
-		return nil, ""
 	}
 
 }
 func (u *Users) CheckUser(c echo.Context, email, sitetokens string) (error, string) {
-	db, err := dbconn.DbConnection()
+
+	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
 	if err != nil {
-		return err, "wrong input"
+		return err, ""
 	}
-	var exists string
-	ctx, cancel := context.WithTimeout(context.Background(), 56666*time.Millisecond)
-	defer cancel()
-	stmts := db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM users WHERE email=? AND sitetoken=?)", email, sitetokens)
-	err = stmts.Scan(&exists)
+	qr, err := conn.QueryOneParameterized(
+		gorqlite.ParameterizedStatement{
+			Query:     "SELECT 1 from users where email = ? AND sitetoken=?",
+			Arguments: []interface{}{email, sitetokens},
+		},
+	)
 	if err != nil {
-		return err, "wrong input"
+		return err, ""
 	}
+	var exist bool
 
-	if exists == "0" {
-		return err, "wrong input"
-	} else {
-		u, err := u.GetUserByEmail(email, sitetokens)
+	for qr.Next() {
+		err := qr.Scan(&exist)
 		if err != nil {
-			return err, "wrong input"
+			return err, ""
+
 		}
+	}
+	defer conn.Close()
 
-		err = crypt.CheckPassword([]byte(u.PasswordHash), []byte(u.PasswordRaw))
-		if err != nil {
+	switch qr.Err {
+	case sql.ErrNoRows:
+		return err, ""
+
+	case nil:
+		return err, ""
+
+	default:
+		if exist == false {
 			return err, "wrong input"
+		} else {
+			u, err := u.GetUserByEmail(email, sitetokens)
+			if err != nil {
+				return err, "wrong input"
+			}
+
+			err = crypt.CheckPassword([]byte(u.PasswordHash), []byte(u.PasswordRaw))
+			if err != nil {
+				return err, "wrong input"
+			}
+
+			cookie, err := cookies.ReadCookie(c, u.SessionName)
+			if err != nil {
+				return err, "wrong input"
+			}
+
+			fmt.Println(u)
+			if cookie.Name != u.SessionName && cookie.Value != u.SessionKey {
+				return err, "wrong input"
+			}
+
+			//header
+			hkey := c.Response().Header().Get("headerkey")
+
+			crypt.CheckPassword([]byte(hkey), []byte("goservershell"))
+
+			return nil, ""
 		}
-
-		cookie, err := cookies.ReadCookie(c, u.SessionName)
-		if err != nil {
-			return err, "wrong input"
-		}
-
-		fmt.Println(u)
-		if cookie.Name != u.SessionName && cookie.Value != u.SessionKey {
-			return err, "wrong input"
-		}
-
-		//header
-		hkey := c.Response().Header().Get("headerkey")
-
-		crypt.CheckPassword([]byte(hkey), []byte("goservershell"))
-
-		db.Close()
-
-		return nil, ""
 	}
 
 }
 func (u *Users) Create() error {
 
-	db, err := dbconn.DbConnection()
+	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
 	if err != nil {
 		return err
 	}
-	// Create a statement to insert data into the `users` table.
-	stmt, err := db.PrepareContext(context.Background(), "INSERT INTO `users` (`email`, `passwordhash`, `passwordraw`, `isdisabled`, `sessionkey`, `sessionname`,  `sessiontoken`, `sitetoken`) VALUES (?, ?,?, ?,?,?, ?, ?)")
+	_, err = conn.WriteParameterized(
+		[]gorqlite.ParameterizedStatement{
+			{
+				Query:     "INSERT INTO `users` (`email`, `passwordhash`, `passwordraw`, `isdisabled`, `sessionkey`, `sessionname`,  `sessiontoken`, `sitetoken`) VALUES (?, ?,?, ?,?,?, ?, ?)",
+				Arguments: []interface{}{u.Email, u.PasswordHash, u.PasswordRaw, "true", u.SessionKey, u.SessionName, u.SessionToken, u.SiteToken},
+			},
+		},
+	)
 	if err != nil {
-		panic(err)
-	}
-	defer stmt.Close()
-
-	// Insert data into the `users` table.
-	_, err = stmt.ExecContext(context.Background(), u.Email, u.PasswordHash, u.PasswordRaw, "true", u.SessionKey, u.SessionName, u.SessionToken, u.SiteToken)
-	if err != nil {
-		panic(err)
+		return err
 	}
 
-	db.Close()
+	defer conn.Close()
+
 	return nil
 }
 
@@ -226,10 +290,6 @@ func (users *Users) Validate(user *Users) error {
 }
 
 func (user *Users) GetUser(id, idkey string) (Users, error) {
-	db, err := dbconn.DbConnection()
-	if err != nil {
-		return *user, err
-	}
 	var (
 		email        string
 		passwordhash string
@@ -240,35 +300,64 @@ func (user *Users) GetUser(id, idkey string) (Users, error) {
 		sitetoken    string
 		u            Users
 	)
+	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	if err != nil {
+		return u, err
+	}
+	qrr, err := conn.QueryOneParameterized(
+		gorqlite.ParameterizedStatement{
+			Query:     "SELECT 1 from users where id = ? AND sitetoken=?",
+			Arguments: []interface{}{id, idkey},
+		},
+	)
+	if err != nil {
+		return u, err
+	}
 
-	//get from database
-	stmt, err := db.Prepare("SELECT * FROM users WHERE id = ? AND SiteToken = ?")
-	if err != nil {
-		return u, err
+	var exist bool
+
+	for qrr.Next() {
+		err := qrr.Scan(&exist)
+		if err != nil {
+			return u, err
+		}
 	}
-	err = stmt.QueryRow(id, idkey).Scan(email, passwordhash, isdisabled, sessionkey, sessionname, sessiontoken, sitetoken)
-	if err != nil {
-		return u, err
-	}
-	u = Users{ID: id, Email: email, PasswordHash: passwordhash, Isdisabled: isdisabled, SessionKey: sessionkey, SessionName: sessionname, SessionToken: sessiontoken, SiteToken: sitetoken}
-	defer db.Close()
-	defer stmt.Close()
-	switch err {
+	defer conn.Close()
+	switch qrr.Err {
 	case sql.ErrNoRows:
-		fmt.Println("No rows were returned!")
-		// close db when not in use
-		return u, nil
-
+		return u, qrr.Err
 	case nil:
-		fmt.Println("nil!!!!!!!!!!!!")
-
-		// close db when not in use
-		return u, nil
-
+		return u, qrr.Err
 	default:
 
-		fmt.Println("default!!!!!!!!!!!!")
+		if !exist {
+			qr, err := conn.QueryOneParameterized(
+				gorqlite.ParameterizedStatement{
+					Query:     "SELECT * FROM users WHERE id = ? AND SiteToken = ?",
+					Arguments: []interface{}{id, idkey},
+				},
+			)
+			if err != nil {
+				return u, err
+			}
+			for qr.Next() {
+				err := qr.Scan(&id, &email, &passwordhash, &isdisabled, &sessionkey, &sessionname, &sessiontoken, &sitetoken)
+				if err != nil {
+					return u, err
+				}
+			}
+			u = Users{ID: id, Email: email, PasswordHash: passwordhash, Isdisabled: isdisabled, SessionKey: sessionkey, SessionName: sessionname, SessionToken: sessiontoken, SiteToken: sitetoken}
+			switch err {
+			case sql.ErrNoRows:
+				return u, err
 
+			case nil:
+				return u, err
+
+			default:
+				return u, nil
+			}
+		}
 		return u, nil
 	}
 
@@ -276,10 +365,9 @@ func (user *Users) GetUser(id, idkey string) (Users, error) {
 
 // https://golangbot.com/mysql-select-single-multiple-rows/
 func (user Users) GetUserByEmail(email, idkey string) (Users, error) {
-	// ctx, cancelfunc := context.WithTimeout(context.Background(), 500*time.Second)
-	// defer cancelfunc()
+
 	var (
-		id           string
+		id           float64
 		passwordhash string
 		passwordraw  string
 		isdisabled   string
@@ -289,62 +377,59 @@ func (user Users) GetUserByEmail(email, idkey string) (Users, error) {
 		sitetoken    string
 		u            Users
 	)
-	db, err := dbconn.DbConnection()
+	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	if err != nil {
+		return u, err
+	}
+	qr, err := conn.QueryOneParameterized(
+		gorqlite.ParameterizedStatement{
+			Query:     "SELECT * FROM users WHERE email = ? AND SiteToken = ?",
+			Arguments: []interface{}{email, idkey},
+		},
+	)
 	if err != nil {
 		return u, err
 	}
 
-	//get from database
-	stmt, err := db.Prepare("SELECT * FROM users WHERE email = ? AND sitetoken = ?")
-	if err != nil {
-		return u, err
+	for qr.Next() {
+		err := qr.Scan(&id, &email, &passwordhash, &passwordraw, &isdisabled, &sessionkey, &sessionname, &sessiontoken, &sitetoken)
+		if err != nil {
+			return u, err
+		}
 	}
-	err = stmt.QueryRow(email, idkey).Scan(&id, &email, &passwordhash, &passwordraw, &isdisabled, &sessionkey, &sessionname, &sessiontoken, &sitetoken)
-	if err != nil {
-		return u, err
-	}
-	u = Users{ID: id, Email: email, PasswordHash: passwordhash, Isdisabled: isdisabled, SessionKey: sessionkey, SessionName: sessionname, SessionToken: sessiontoken, SiteToken: sitetoken}
-	defer db.Close()
-	defer stmt.Close()
+	sid := fmt.Sprintf("%f", id)
+	u = Users{ID: sid, Email: email, PasswordHash: passwordhash, PasswordRaw: passwordraw, Isdisabled: isdisabled, SessionKey: sessionkey, SessionName: sessionname, SessionToken: sessiontoken, SiteToken: sitetoken}
 	switch err {
 	case sql.ErrNoRows:
-		fmt.Println("No rows were returned!")
 		// close db when not in use
-		return u, nil
+		return u, err
 
 	case nil:
-		fmt.Println("was nil !!!!!!!!!!!!!", email)
-
-		// close db when not in use
-		return u, nil
+		return u, err
 
 	default:
-
-		fmt.Println("default!!!!!!!!!!!!")
-
 		return u, nil
 	}
 
 }
 
 func (user Users) SetUserSitetoken(sitetoken string) error {
-	//opening database
-	db, err := dbconn.DbConnection()
+	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	if err != nil {
+		return err
+	}
+	_, err = conn.WriteParameterized(
+		[]gorqlite.ParameterizedStatement{
+			{
+				Query:     "update users set sitetoken=? ",
+				Arguments: []interface{}{sitetoken},
+			},
+		},
+	)
 	if err != nil {
 		return err
 	}
 
-	//prepare statement so that no sql injection
-	stmt, err := db.Prepare("update users set sitetoken=?")
-	if err != nil {
-		return err
-	}
-
-	//execute qeury
-	_, err = stmt.Exec(sitetoken)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

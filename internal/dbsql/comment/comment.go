@@ -1,84 +1,80 @@
 package comment
 
 import (
-	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/go-playground/validator"
-	"github.com/golangast/genserv/internal/dbsql/dbconn"
-	"github.com/golangast/genserv/internal/loggers"
+	"github.com/rqlite/gorqlite"
 )
 
 func (u *Comment) Create() error {
-	db, err := dbconn.DbConnection()
+	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	if err != nil {
+		panic(err)
+	}
+
+	// statements := make([]string, 0)
+	// pattern := "INSERT INTO comment(email, language, comment, sitetoken) VALUES (%s, '%s', '%s', '%s')"
+
+	// using parameterized statements
+	_, err = conn.WriteParameterized(
+		[]gorqlite.ParameterizedStatement{
+			{
+				Query:     "INSERT INTO comment(email, language, comment, sitetoken) VALUES(?, ?, ?,?)",
+				Arguments: []interface{}{u.Email, u.Comment, u.Language, u.Sitetoken},
+			},
+		},
+	)
+	// statements = append(statements, fmt.Sprintf(pattern, u.Email, u.Comment, u.Language, u.Sitetoken))
+	// results, err := conn.Write(statements)
 	if err != nil {
 		return err
 	}
-	// Create a statement to insert data into the `users` table.
-	stmt, err := db.PrepareContext(context.Background(), "INSERT INTO `comment` (`email`, `language`, `comment`,  `sitetoken`) VALUES (?, ?,?, ?)")
-	if err != nil {
-		panic(err)
-	}
-	defer stmt.Close()
 
-	// Insert data into the `users` table.
-	_, err = stmt.ExecContext(context.Background(), u.Email, u.Comment, u.Language, u.Sitetoken)
-	if err != nil {
-		panic(err)
-	}
-
-	db.Close()
 	return nil
 }
 
 // ValidateValuer implements validator.CustomTypeFunc
 func (comment *Comment) Validate(comments *Comment) error {
-	logger := loggers.CreateLogger()
 	validate := validator.New()
 	err := validate.Struct(comment)
 	if err != nil {
-		logger.Error(
-			"trying to validate comment",
-			slog.String("error: ", err.Error()),
-		)
 		return err
 	}
+
 	for _, err := range err.(validator.ValidationErrors) {
 		if err != nil {
-			logger.Error(
-				"validating comment fields",
-				slog.String("error: ", err.StructField()),
-				slog.String("error: ", err.ActualTag()),
-				slog.String("error: ", err.Kind().String()),
-			)
-			return nil
+			fmt.Println(err.Value())
+			fmt.Println(err.Param())
 		}
-		fmt.Println(err.Value())
-		fmt.Println(err.Param())
+
 	}
 	return nil
 	// save user to database
 }
 
 func (comment Comment) SetUserSitetoken(sitetoken string) error {
-	//opening database
-	db, err := dbconn.DbConnection()
+
+	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
 	if err != nil {
-		return err
+		panic(err)
 	}
 
-	//prepare statement so that no sql injection
-	stmt, err := db.Prepare("update comment set sitetoken=?")
+	statements := make([]string, 0)
+	pattern := "update comment set sitetoken ('%s')"
+	statements = append(statements, fmt.Sprintf(pattern, sitetoken))
+	results, err := conn.Write(statements)
 	if err != nil {
-		return err
+		fmt.Println(err)
 	}
 
-	//execute qeury
-	_, err = stmt.Exec(sitetoken)
-	if err != nil {
-		return err
+	for n, v := range results {
+		fmt.Printf("for result %d, %d rows were affected\n", n, v.RowsAffected)
+		if v.Err != nil {
+			fmt.Printf("   we have this error: %s\n", v.Err.Error())
+		}
 	}
+
 	return nil
 }
 
