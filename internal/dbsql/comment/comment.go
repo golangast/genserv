@@ -4,13 +4,14 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator"
+	"github.com/golangast/genserv/internal/dbsql/dbconn"
 	"github.com/rqlite/gorqlite"
 )
 
 func (u *Comment) Create() error {
-	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	conn, err := dbconn.DbConnection()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// statements := make([]string, 0)

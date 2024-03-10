@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator"
+	"github.com/golangast/genserv/internal/dbsql/dbconn"
 	"github.com/golangast/genserv/internal/security/cookies"
 	"github.com/golangast/genserv/internal/security/crypt"
 	"github.com/golangast/genserv/internal/security/jwt"
@@ -49,7 +50,7 @@ func (u *Users) Exists() (error, bool) {
 
 }
 func Exists(email, password, sitetoken string) (bool, error) {
-	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	conn, err := dbconn.DbConnection()
 	if err != nil {
 		return false, err
 	}

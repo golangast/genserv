@@ -1,30 +1,15 @@
 package dbconn
 
 import (
-	"database/sql"
 	"fmt"
-	"time"
 
+	"github.com/rqlite/gorqlite"
 	_ "modernc.org/sqlite"
 )
 
-func DbConnection() (*sql.DB, error) {
-	const file string = "./assets/db/database.db"
-
-	db, err := sql.Open("sqlite", file)
-	if err != nil {
-		fmt.Println(err)
-	}
-	db.SetMaxOpenConns(20)
-	db.SetMaxIdleConns(20)
-	db.SetConnMaxLifetime(time.Minute * 5)
-	//check if it pings
-	err = db.Ping()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	return db, nil
+func DbConnection() (*gorqlite.Connection, error) {
+	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	return conn, err
 } //end of connect
 func ErrorCheck(err error) {
 	if err != nil {
