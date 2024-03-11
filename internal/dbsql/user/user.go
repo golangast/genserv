@@ -430,7 +430,6 @@ func (user Users) SetUserSitetoken(sitetoken string) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
