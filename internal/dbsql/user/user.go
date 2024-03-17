@@ -14,7 +14,7 @@ import (
 )
 
 func (u *Users) Exists() (error, bool) {
-	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	conn, err := dbconn.DbConnection()
 	if err != nil {
 		return err, false
 	}
@@ -89,8 +89,7 @@ func Exists(email, password, sitetoken string) (bool, error) {
 
 }
 func (u *Users) CheckLogin(c echo.Context, email, sitetokens, passwordraw string) (error, string) {
-
-	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	conn, err := dbconn.DbConnection()
 	if err != nil {
 		return err, ""
 	}
@@ -154,7 +153,7 @@ func (u *Users) CheckLogin(c echo.Context, email, sitetokens, passwordraw string
 }
 func (u *Users) CheckUser(c echo.Context, email, sitetokens string) (error, string) {
 
-	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	conn, err := dbconn.DbConnection()
 	if err != nil {
 		return err, ""
 	}
@@ -221,7 +220,7 @@ func (u *Users) CheckUser(c echo.Context, email, sitetokens string) (error, stri
 }
 func (u *Users) Create() error {
 
-	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	conn, err := dbconn.DbConnection()
 	if err != nil {
 		return err
 	}
@@ -301,7 +300,7 @@ func (user *Users) GetUser(id, idkey string) (Users, error) {
 		sitetoken    string
 		u            Users
 	)
-	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	conn, err := dbconn.DbConnection()
 	if err != nil {
 		return u, err
 	}
@@ -378,7 +377,7 @@ func (user Users) GetUserByEmail(email, idkey string) (Users, error) {
 		sitetoken    string
 		u            Users
 	)
-	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	conn, err := dbconn.DbConnection()
 	if err != nil {
 		return u, err
 	}
@@ -415,7 +414,7 @@ func (user Users) GetUserByEmail(email, idkey string) (Users, error) {
 }
 
 func (user Users) SetUserSitetoken(sitetoken string) error {
-	conn, err := gorqlite.Open("http://bill:secret1@localhost:4001/")
+	conn, err := dbconn.DbConnection()
 	if err != nil {
 		return err
 	}
