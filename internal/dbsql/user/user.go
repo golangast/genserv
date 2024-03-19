@@ -89,10 +89,7 @@ func Exists(email, password, sitetoken string) (bool, error) {
 
 }
 func (u *Users) CheckLogin(c echo.Context, email, sitetokens, passwordraw string) (error, string) {
-<<<<<<< HEAD
-=======
 
->>>>>>> main
 	conn, err := dbconn.DbConnection()
 	if err != nil {
 		return err, ""
