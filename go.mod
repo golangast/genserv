@@ -8,7 +8,6 @@ require (
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golangast/gentil v0.0.0-20240203190046-df50137b967d
-	github.com/golangast/goservershell v0.0.0-20231029021855-840efafb4e0a
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/labstack/gommon v0.4.2
@@ -18,7 +17,6 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/tdewolff/minify/v2 v2.20.18
 	golang.org/x/crypto v0.20.0
-	golang.org/x/text v0.14.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	modernc.org/sqlite v1.29.2
 )
@@ -39,6 +37,7 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -61,9 +60,11 @@ require (
 	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678 // indirect
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	gonum.org/v1/gonum v0.9.3 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
