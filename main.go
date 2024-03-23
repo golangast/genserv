@@ -34,6 +34,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/spf13/viper"
+	"golang.org/x/crypto/acme/autocert"
 	// #importtls
 )
 
@@ -194,8 +195,8 @@ func main() {
 	}))
 	// Generate a nonce
 
-	var works = "frame-src youtube.com www.youtube.com; default-src 'self'; style-src " + PNonce + " 'self' https://genserver.com *.genserver.com *.genserver.com/*; img-src  " + PNonce + " 'self' https://genserver.com *.genserver.com *.genserver.com/*; style-src-elem " + PNonce + " *.localhost:5002/*;"
-	var script = "connect-src " + PNonce + " *.localhost:5002/* *.google-analytics.com *.googletagmanager.com;base-uri 'self'; object-src 'none'; script-src " + PNonce + " *.googletagmanager.com; report-uri https://genserver.com *.genserver.com *.genserver.com/*;script-src-elem " + PNonce + " *.googletagmanager.com;"
+	var works = "frame-src youtube.com www.youtube.com; default-src 'self'; style-src " + PNonce + " 'self' https://localhost *.localhost *.localhost/*; img-src  " + PNonce + " 'self' https://localhost *.localhost *.localhost/*; style-src-elem " + PNonce + " *.localhost:5002/*;"
+	var script = "connect-src " + PNonce + " *.localhost:5002/* *.google-analytics.com *.googletagmanager.com;base-uri 'self'; object-src 'none'; script-src " + PNonce + " *.googletagmanager.com; report-uri https://localhost *.localhost *.localhost/*;script-src-elem " + PNonce + " *.googletagmanager.com;"
 	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
 		XSSProtection:         "1; mode=block",
 		XFrameOptions:         "SAMEORIGIN",
@@ -212,11 +213,26 @@ func main() {
 	}))
 
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(30)))
+
 	e.Static("/", "assets/optimized")
-	//#tls
 
-	e.Logger.Fatal(e.Start(":5002"))
+	e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
+	e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
+	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+		HTML5:      true,
+		Root:       "assets/optimized/",
+		Filesystem: http.FS(AssetsOptimize),
+	}))
+	e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
+	e.Logger.Fatal(e.StartAutoTLS(":443"))
+	/* if you want to run this locally do sudo -s then the following
+		 export GOPATH=$HOME/go
+	export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
+	export GOCACHE=/root/go/cache
 
+	then run go run .
+	*/
 }
 
 type TemplateRenderer struct {
@@ -267,7 +283,6 @@ func findjsrename() string {
 	// Walk the directory and print the names of all the files
 	err = filepath.Walk(currentDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 
@@ -287,7 +302,7 @@ func findjsrename() string {
 			}
 
 		} else {
-			fmt.Println("doesnt contain directory", path)
+			//fmt.Println("doesnt contain directory", path)
 		}
 
 		return nil
@@ -314,7 +329,7 @@ func findcssrename() string {
 	// Walk the directory and print the names of all the files
 	err = filepath.Walk(currentDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Println(err)
+			//	fmt.Println(err)
 			return err
 		}
 
@@ -334,7 +349,7 @@ func findcssrename() string {
 			}
 
 		} else {
-			fmt.Println("doesnt contain directory", path)
+			//fmt.Println("doesnt contain directory", path)
 		}
 
 		return nil
@@ -349,7 +364,7 @@ func findcssrename() string {
 
 // f is for file, o is for old text, n is for new text
 func UpdateText(f string, o string, n string) {
-	fmt.Println(f, o, n)
+	//fmt.Println(f, o, n)
 	input, err := os.ReadFile(f)
 	if err != nil {
 		fmt.Println(err)
@@ -358,10 +373,10 @@ func UpdateText(f string, o string, n string) {
 
 	output := bytes.Replace(input, []byte(o), []byte(n), -1)
 
-	fmt.Println("file: ", f, " old: ", o, " new: ", n)
+	//fmt.Println("file: ", f, " old: ", o, " new: ", n)
 
 	if err = os.WriteFile(f, output, 0666); err != nil {
-		fmt.Println(err)
+		//fmt.Println(err)
 		os.Exit(1)
 	}
 }
