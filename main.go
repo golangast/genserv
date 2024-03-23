@@ -225,14 +225,12 @@ func main() {
 		Filesystem: http.FS(AssetsOptimize),
 	}))
 	e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
-	e.Logger.Fatal(e.StartAutoTLS(":443"))
-	/* if you want to run this locally do sudo -s then the following
-		 export GOPATH=$HOME/go
-	export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
-	export GOCACHE=/root/go/cache
+	//to run in production with https/tls switch 1. and 2.
+	//1. used for https/tls
+	// e.Logger.Fatal(e.StartAutoTLS(":443"))
+	//2. used for deving
+	e.Logger.Fatal(e.Start(":5002"))
 
-	then run go run .
-	*/
 }
 
 type TemplateRenderer struct {
