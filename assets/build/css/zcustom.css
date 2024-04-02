@@ -255,6 +255,36 @@ margin:3% auto;
   
 }
 
+.full { grid-area: full; }
+.lhalf { grid-area: lhalf; }
+.rhalf { grid-area: rhalf; }
+.middler { grid-area: middler; }
+
+.quarter1 { grid-area: quarter1; }
+.quarter2 { grid-area: quarter2; }
+.quarter3 { grid-area: quarter3; }
+.quarter4 { grid-area: quarter4; }
+
+.grid-container {
+  display: grid;
+  grid-template-areas:
+    'full full full full '
+    'lhalf lhalf rhalf rhalf'
+    'quarter1 quarter2 quarter3 quarter4'
+    '. middler middler .'
+   ;
+  gap: 10px;
+  background-color: #2196F3;
+  padding: 10px;
+}
+
+.grid-container > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 20px 0;
+  font-size: 30px;
+}
+
 @media only screen and (max-width : 992px) {
 
   header,
